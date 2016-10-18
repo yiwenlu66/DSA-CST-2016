@@ -16,6 +16,7 @@ uint64_t a[MAXSEG], b[MAXSEG], product[MAXSEG];
 size_t read(uint64_t* dst);  // read a number from stdin into dst, return length of number
 size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst);   // multiply a and b into dst, return length of product
 void write(uint64_t* p, size_t lp); // print the result to stdout
+int iszero(uint64_t* n, size_t l);
 
 int main()
 {
@@ -27,8 +28,13 @@ int main()
     while (n-- > 0) {
         la = read(a);
         lb = read(b);
-        lp = mul(a, la, b, lb, product);
-        write(product, lp);
+        if (iszero(a, la) || iszero(b, lb)) {
+            // deal with edge case
+            printf("0\n");
+        } else {
+            lp = mul(a, la, b, lb, product);
+            write(product, lp);
+        }
     }
     return 0;
 }
@@ -81,4 +87,9 @@ void write(uint64_t* p, size_t lp)
         printf("%0*lu", SEG_SZ, p[lp - i - 1]);
     }
     printf("\n");
+}
+
+int iszero(uint64_t* n, size_t l)
+{
+    return l == 1 && n[0] == 0;
 }
