@@ -3,13 +3,14 @@
 #include "stdint.h"
 #include "math.h"
 #define BUF_SZ  1 << 23
-#define MAXLEN  10000
+#define MAXLEN  5000
 #define SEG_SZ  9
 #define SEG_EXP 1000000000UL
+#define MAXSEG  1112
 
 char ibuf[BUF_SZ], obuf[BUF_SZ];
 char nbuf[MAXLEN];
-uint64_t a[MAXLEN], b[MAXLEN], product[MAXLEN];
+uint64_t a[MAXSEG], b[MAXSEG], product[MAXSEG];
 
 size_t read(uint64_t* dst);  // return length of number
 size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst);   // return length of product
@@ -49,7 +50,7 @@ size_t read(uint64_t* dst)
 
 size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst)
 {
-    memset(dst, 0, sizeof(uint64_t) * MAXLEN);
+    memset(dst, 0, sizeof(uint64_t) * MAXSEG);
     uint64_t carry = 0;
     size_t i, j;
     for (i = 0; i < la; ++i) {
