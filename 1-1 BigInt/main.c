@@ -1,12 +1,13 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdint.h"
-#include "math.h"
 #define BUF_SZ  1 << 23
 #define MAXLEN  5000
 #define SEG_SZ  9
 #define SEG_EXP 1000000000UL
 #define MAXSEG  1112
+
+const uint64_t EXP[] = { 1UL, 10UL, 100UL, 1000UL, 10000UL, 100000UL, 1000000UL, 10000000UL, 100000000UL, 1000000000UL };
 
 char ibuf[BUF_SZ], obuf[BUF_SZ];
 char nbuf[MAXLEN];
@@ -35,17 +36,17 @@ int main()
 size_t read(uint64_t* dst)
 {
     scanf("%s", nbuf);
-    size_t l = strlen(nbuf);
-    size_t sz = (size_t)(ceil(1.0 * l / SEG_SZ));
-    size_t i, j;
-    uint64_t exp;
-    for (i = 0; i < sz; ++i) {
-        dst[i] = 0;
-        for (j = 0, exp = 1; j < SEG_SZ && SEG_SZ * i + j < l; ++j, exp *= 10) {
-            dst[i] += exp * (nbuf[l - 1 - i * SEG_SZ - j] - '0');  // little-endian
+    size_t pos = 0;
+    int i, j = 0;
+    dst[0] = 0;
+    for (i = (int)strlen(nbuf) - 1; i >= 0; --i) {
+        if (j >= SEG_SZ) {
+            j = 0;
+            dst[++pos] = 0;
         }
+        dst[pos] += EXP[j++] * (nbuf[i] - '0');
     }
-    return sz;
+    return pos + 1;
 }
 
 size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst)
