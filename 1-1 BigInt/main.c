@@ -1,6 +1,6 @@
-#include "stdio.h"
-#include "string.h"
-#include "stdint.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 #define BUF_SZ  1 << 23
 #define MAXLEN  5000
 #define SEG_SZ  8
