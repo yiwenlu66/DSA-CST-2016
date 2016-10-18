@@ -3,9 +3,9 @@
 #include "stdint.h"
 #define BUF_SZ  1 << 23
 #define MAXLEN  5000
-#define SEG_SZ  9
-#define SEG_EXP 1000000000UL
-#define MAXSEG  1112
+#define SEG_SZ  8
+#define SEG_EXP 100000000UL
+#define MAXSEG  1250
 
 const uint64_t EXP[] = { 1UL, 10UL, 100UL, 1000UL, 10000UL, 100000UL, 1000000UL, 10000000UL, 100000000UL, 1000000000UL };
 
@@ -52,16 +52,15 @@ size_t read(uint64_t* dst)
 size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst)
 {
     memset(dst, 0, sizeof(uint64_t) * MAXSEG);
-    uint64_t carry = 0;
     size_t i, j;
     for (i = 0; i < la; ++i) {
         for (j = 0; j < lb; ++j) {
-            uint64_t digit_with_carry = a[i] * b[j] + dst[i + j] + carry;
-            dst[i + j] = digit_with_carry % SEG_EXP;
-            carry = digit_with_carry / SEG_EXP;
+            dst[i + j] += a[i] * b[j];
         }
-        dst[i + lb] = carry;
-        carry = 0;
+    }
+    for (i = 0; i < la + lb; ++i) {
+        dst[i + 1] += dst[i] / SEG_EXP;
+        dst[i] %= SEG_EXP;
     }
     return dst[la + lb - 1] ? (la + lb) : (la + lb - 1);
 }
