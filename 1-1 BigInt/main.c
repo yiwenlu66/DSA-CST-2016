@@ -13,9 +13,9 @@ char ibuf[BUF_SZ], obuf[BUF_SZ];
 char nbuf[MAXLEN];
 uint64_t a[MAXSEG], b[MAXSEG], product[MAXSEG];
 
-size_t read(uint64_t* dst);  // return length of number
-size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst);   // return length of product
-void write(uint64_t* p, size_t lp);
+size_t read(uint64_t* dst);  // read a number from stdin into dst, return length of number
+size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst);   // multiply a and b into dst, return length of product
+void write(uint64_t* p, size_t lp); // print the result to stdout
 
 int main()
 {
@@ -39,6 +39,8 @@ size_t read(uint64_t* dst)
     size_t pos = 0;
     int i, j = 0;
     dst[0] = 0;
+
+    // store as little-endian
     for (i = (int)strlen(nbuf) - 1; i >= 0; --i) {
         if (j >= SEG_SZ) {
             j = 0;
@@ -46,6 +48,7 @@ size_t read(uint64_t* dst)
         }
         dst[pos] += EXP[j++] * (nbuf[i] - '0');
     }
+
     return pos + 1;
 }
 
@@ -53,15 +56,20 @@ size_t mul(uint64_t* a, size_t la, uint64_t* b, size_t lb, uint64_t* dst)
 {
     memset(dst, 0, sizeof(uint64_t) * MAXSEG);
     size_t i, j;
+
+    // convolution
     for (i = 0; i < la; ++i) {
         for (j = 0; j < lb; ++j) {
             dst[i + j] += a[i] * b[j];
         }
     }
+
+    // carry
     for (i = 0; i < la + lb; ++i) {
         dst[i + 1] += dst[i] / SEG_EXP;
         dst[i] %= SEG_EXP;
     }
+
     return dst[la + lb - 1] ? (la + lb) : (la + lb - 1);
 }
 
