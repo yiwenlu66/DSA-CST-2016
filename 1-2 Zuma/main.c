@@ -27,9 +27,9 @@ void output();
 
 void newbead(char val, size_t pos);  // insert or eliminate; update index
 
-// index for speeding up addressing
+// index for speeding up addressing, inspired by ex2-23
 size_t len;
-Node* idx[MAXIDX];   // pointers to node 0, step, 2 * step, ...
+Node* idx[MAXIDX];   // pointers to node 0, stepsz, 2 * stepsz, ...
 size_t stepsz, halfstepsz, nstep;    // stepsz ~ sqrt(m + n)
 
 // insertion and elimination
