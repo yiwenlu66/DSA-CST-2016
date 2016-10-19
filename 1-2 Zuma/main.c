@@ -32,8 +32,7 @@ void newbead(char val, size_t pos);  // insert or eliminate; update index
 // index for speeding up addressing
 size_t len;
 Node* idx[MAXIDX];   // pointers to node 0, step, 2 * step, ...
-size_t stepsz;    // ~sqrt(m + n)
-size_t nstep;
+size_t stepsz, halfstepsz, nstep;    // stepsz ~ sqrt(m + n)
 
 // insertion and elimination
 Node* append(char val);  // create a new node and append it to the end; for initialization only
@@ -55,6 +54,7 @@ int main()
     size_t m;
     scanf("%lu", &m);
     stepsz = max(MINSTEPSZ, (size_t)sqrt(len + m));
+    halfstepsz = stepsz >> 1;
 
     size_t i;
     for (i = nstep = 0; i < len; ++i) {
@@ -103,10 +103,19 @@ void newbead(char val, size_t pos)
     // (lo, hi) can be eliminated if the range is long enough
     size_t streak = 1;
     Node * lo, * hi;
-    hi = pos / stepsz < nstep ? idx[pos / stepsz] : trailer;
-    size_t i;
-    for (i = 0; i < pos % stepsz; ++i) {
-        hi = hi->succ;
+    if (pos % stepsz <= halfstepsz) {
+        hi = pos / stepsz < nstep ? idx[pos / stepsz] : trailer;
+        size_t i;
+        for (i = 0; i < pos % stepsz; ++i) {
+            hi = hi->succ;
+        }
+    } else {
+        hi = pos / stepsz + 1 < nstep ? idx[pos / stepsz + 1] : trailer;
+        size_t i;
+        size_t offset = (hi == trailer) ? (len - pos) : (stepsz - pos % stepsz);
+        for (i = 0; i < offset; ++i) {
+            hi = hi->pred;
+        }
     }
     lo = hi->pred;
     size_t lopos = pos - 1;
