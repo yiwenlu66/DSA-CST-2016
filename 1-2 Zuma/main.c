@@ -7,7 +7,6 @@
 #define OBUF_SZ 1 << 21
 #define MAXN 1000001
 #define MAXIDX 1250
-#define TH 3    // threshold for elimination
 #define MINSTEPSZ 10
 
 typedef struct Node {
@@ -130,37 +129,45 @@ void newbead(char val, size_t pos)
         ++streak;
         hi = hi->succ;
     }
-    if (streak < TH) {
+    if (streak < 3) {
         // cannot eliminate, insert the node
         insert(succ, val, pos);
     } else {
         // can eliminate, no need to insert the node
-        size_t n = streak - 1; // total number of nodes to be eliminated, excluding the "new" node
-        Node * newlo, * newhi;
-        size_t newlopos;
-        while (lo->val == hi->val) {
+        size_t n = 2; // total number of nodes to be eliminated, excluding the "new" node
+        int loop = 1;
+        while (loop && lo->val == hi->val) {
             // can do furthur elimination
-            newlo = lo;
-            newhi = hi;
-            newlopos = lopos;
-            streak = 0;
-            do {
-                ++streak;
-                newlo = newlo->pred;
-                --newlopos;
-            } while (newlo->val == lo->val);
-            do {
-                ++streak;
-                newhi = newhi->succ;
-            } while (newhi->val == hi->val);
-            if (streak >= TH) {
-                n += streak;
-                lo = newlo;
-                hi = newhi;
-                lopos = newlopos;
-            } else {
+
+            int lc = (lo->pred->val == lo->val);   // can continue left
+            int rc = (hi->succ->val == hi->val);   // can continue right
+
+            switch ((lc << 1) + rc) {
+            case 0:
+                loop = 0;
+                break;
+            case 1:
+                lo = lo->pred;
+                --lopos;
+                hi = hi->succ->succ;
+                n += 3;
+                break;
+            case 2:
+                lo = lo->pred->pred;
+                lopos -= 2;
+                hi = hi->succ;
+                n += 3;
+                break;
+            case 3:
+                lo = lo->pred->pred;
+                lopos -= 2;
+                hi = hi->succ->succ;
+                n += 4;
+                break;
+            default:
                 break;
             }
+
         }
         elim(lo->succ, lopos + 1, n);
     }
