@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #define max(a, b) ((a) > (b)) ? (a) : (b)
@@ -39,6 +38,9 @@ Node* append(char val);  // create a new node and append it to the end; for init
 void insert(Node* succ, char val, size_t pos);   // create a new node and insert it before the given node; update index
 void elim(Node* start, size_t startpos, size_t n);   // delete n nodes starting from the given node; update index
 
+// others
+size_t readline(char* s);
+
 int main()
 {
     setvbuf(stdin, ibuf, _IOFBF, IBUF_SZ);
@@ -48,8 +50,7 @@ int main()
     // estimate scale and initialize list
 
     init();
-    scanf("%s", init_str);
-    len = strlen(init_str);
+    len = readline(init_str);
 
     size_t m;
     scanf("%lu", &m);
@@ -223,4 +224,15 @@ void insertbefore(Node* newnode, Node* succ)
     newnode->succ = succ;
     succ->pred->succ = newnode;
     succ->pred = newnode;
+}
+
+size_t readline(char* s)
+{
+    size_t i = 0;
+    char c;
+    while ((c = getchar()) != '\n') {
+        s[i++] = c;
+    }
+    s[i] = '\0';
+    return i;
 }
