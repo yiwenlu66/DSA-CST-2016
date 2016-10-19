@@ -178,14 +178,14 @@ void elim(Node* start, size_t startpos, size_t n)
     // update the index
     size_t quo = n / stepsz, mod = n % stepsz;
     size_t i, j;
-    for (i = startpos ? (startpos - 1) / stepsz + 1 : 0; i + quo < nstep; ++i) {
+    len -= n;
+    nstep = len ? (len - 1) / stepsz + 1 : 0;
+    for (i = startpos ? (startpos - 1) / stepsz + 1 : 0; i < nstep; ++i) {
         idx[i] = idx[i + quo];
         for (j = 0; j < mod; ++j) {
             idx[i] = idx[i]->succ;
         }
     }
-    len -= n;
-    nstep = len ? (len - 1) / stepsz + 1 : 0;
 
     // delete the nodes
     Node* before = start->pred;
