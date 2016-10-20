@@ -16,15 +16,15 @@ int main()
     scanf("%d", &n);
     max_unseen = n;
     while (n-- > 0) {
-        while (top > 0 && stack[top - 1] > max_unseen) {
-            printf("%d ", stack[--top]);
-        }
         scanf("%d", &curr);
         seen[curr] = 1;
         if (curr == max_unseen) {
             printf("%d ", curr);
             while (seen[max_unseen]) {
                 --max_unseen;
+            }
+            while (top > 0 && stack[top - 1] > max_unseen) {
+                printf("%d ", stack[--top]);
             }
         } else {
             stack[top++] = curr;
