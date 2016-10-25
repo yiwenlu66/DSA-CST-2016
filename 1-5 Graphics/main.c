@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#define IBUF_SZ 23
-#define OBUF_SZ 21
+#define IBUF_SZ 1 << 23
+#define OBUF_SZ 1 << 21
 #define MAXN 200000
 
 char ibuf[IBUF_SZ], obuf[OBUF_SZ];
