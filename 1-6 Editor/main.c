@@ -9,10 +9,12 @@
 
 char ibuf[BUF_SZ], obuf[BUF_SZ];
 
+typedef int ptr;    // use indices instead of pointers to save space
+
 typedef struct Node {
     char c;
-    struct Node* pred;
-    struct Node* succ;
+    ptr pred;
+    ptr succ;
 } Node;
 
 // pre-allocate all nodes to increase efficiency
@@ -22,11 +24,11 @@ int top;
 char getnbchar();   // read non-blank character from stdin
 
 // linked list
-Node * head, * trailer;
+ptr head, trailer;
 void init();    // read a string from stdin and initialize the list
-void insertbefore(Node* n, char c);
-void del(Node* n);
-void reverse(Node* lo, Node* hi);
+void insertbefore(ptr n, char c);
+void del(ptr n);
+void reverse(ptr lo, ptr hi);
 void show();
 
 
@@ -36,7 +38,7 @@ int main()
     setvbuf(stdout, obuf, _IOFBF, BUF_SZ);
 
     init();
-    Node * lcur = head->succ, * rcur = trailer; // point to the node that the cursor is to the LEFT of
+    ptr lcur = (pool + head)->succ, rcur = trailer; // point to the node that the cursor is to the LEFT of
     /*
      * cursor status
      * -1: lcur is to the left of rcur
@@ -48,18 +50,18 @@ int main()
     int n;
     scanf("%d", &n);
     while (n-- > 0) {
-        Node** cur;
+        ptr* cur;
 
         switch (getnbchar()) {
 
         case '<':
             GETCUR;
-            if ((*cur)->pred == head) {
+            if ((pool + *cur)->pred == head) {
                 // cursor is already to the left of the leftmost character
                 FAIL;
             } else {
                 SUCC;
-                *cur = (*cur)->pred;
+                *cur = (pool + *cur)->pred;
                 // update cursor status
                 if (!cursts) {
                     cursts = (*cur == lcur) ? -1 : 1;
@@ -76,7 +78,7 @@ int main()
                 FAIL;
             } else {
                 SUCC;
-                *cur = (*cur)->succ;
+                *cur = (pool + *cur)->succ;
                 // update cursor status
                 if (!cursts) {
                     cursts = (*cur == lcur) ? 1 : -1;
@@ -100,12 +102,12 @@ int main()
             } else {
                 SUCC;
                 // backup and move cursors
-                Node* bak = *cur;
+                ptr bak = *cur;
                 if (lcur == bak) {
-                    lcur = lcur->succ;
+                    lcur = (pool + lcur)->succ;
                 }
                 if (rcur == bak) {
-                    rcur = rcur->succ;
+                    rcur = (pool + rcur)->succ;
                 }
                 del(bak);
                 // update cursor status
@@ -119,8 +121,8 @@ int main()
             if (cursts == -1) {
                 // left cursor is to the left of right cursor
                 SUCC;
-                Node* oldlcur = lcur;
-                lcur = rcur->pred;
+                ptr oldlcur = lcur;
+                lcur = (pool + rcur)->pred;
                 reverse(oldlcur, rcur);
             } else {
                 FAIL;
@@ -150,66 +152,66 @@ char getnbchar()
 void init()
 {
     // initialize head
-    head = pool;
-    head->c = '\0';
-    head->pred = NULL;
-    head->succ = pool + 1;
+    head = 0;
+    pool->c = '\0';
+    pool->pred = -1;
+    pool->succ = 1;
     top = 1;
 
     // initialize body
     char c;
     while ((c = getchar()) != '\n') {
         pool[top].c = c;
-        pool[top].pred = pool + (top - 1);
-        pool[top].succ = pool + (top + 1);
+        pool[top].pred = top - 1;
+        pool[top].succ = top + 1;
         ++top;
     }
 
     // initialize trailer
     pool[top].c = '\0';
-    pool[top].pred = pool + (top - 1);
-    pool[top].succ = NULL;
-    trailer = pool + (top++);
+    pool[top].pred = top - 1;
+    pool[top].succ = -1;
+    trailer = top++;
 }
 
-void insertbefore(Node* n, char c)
+void insertbefore(ptr n, char c)
 {
-    Node* newnode = pool + (top++);
-    newnode->c = c;
-    newnode->succ = n;
-    newnode->pred = n->pred;
-    n->pred->succ = newnode;
-    n->pred = newnode;
+    ptr newnode = top++;
+    (pool + newnode)->c = c;
+    (pool + newnode)->succ = n;
+    (pool + newnode)->pred = (pool + n)->pred;
+    (pool + (pool + n)->pred)->succ = newnode;
+    (pool + n)->pred = newnode;
 }
 
-void del(Node* n)
+void del(ptr n)
 {
-    n->pred->succ = n->succ;
-    n->succ->pred = n->pred;
+    (pool + (pool + n)->pred)->succ = (pool + n)->succ;
+    (pool + (pool + n)->succ)->pred = (pool + n)->pred;
 }
 
-void reverse(Node* lo, Node* hi)
+void reverse(ptr lo, ptr hi)
 {
-    Node * curr, * tmp;
+    ptr curr, tmp;
     curr = lo;
     while (curr != hi) {
-        tmp = curr->pred;
-        curr->pred = curr->succ;
-        curr->succ = tmp;
-        curr = curr->pred;
+        tmp = (pool + curr)->pred;
+        (pool + curr)->pred = (pool + curr)->succ;
+        (pool + curr)->succ = tmp;
+        curr = (pool + curr)->pred;
     }
-    lo->succ->succ = hi->pred;
-    hi->pred->pred = lo->succ;
-    lo->succ = hi;
-    hi->pred = lo;
+    (pool + (pool + lo)->succ)->succ = (pool + hi)->pred;
+    (pool + (pool + hi)->pred)->pred = (pool + lo)->succ;
+    (pool + lo)->succ = hi;
+    (pool + hi)->pred = lo;
 }
 
 void show()
 {
-    Node * curr = head->succ;
+    ptr curr = (pool + head)->succ;
     while (curr != trailer) {
-        putchar(curr->c);
-        curr = curr->succ;
+        putchar((pool + curr)->c);
+        curr = (pool + curr)->succ;
     }
     putchar('\n');
 }
