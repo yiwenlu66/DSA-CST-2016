@@ -8,7 +8,7 @@
 
 const uint64_t MOD = ((uint64_t)1 << 31);
 
-char ibuf[BUF_SZ], obuf[BUF_SZ];
+char ibuf[BUF_SZ];
 uint32_t A[MAXN];
 
 
@@ -23,7 +23,6 @@ void removeOldest();            // remove oldest element inserted into the trie
 int main()
 {
     setvbuf(stdin, ibuf, _IOFBF, BUF_SZ);
-    setvbuf(stdout, obuf, _IOFBF, BUF_SZ);
 
     int N, K;
     scanf("%d%d", &N, &K);
