@@ -14,6 +14,7 @@ typedef struct {
 } Task;
 
 // Comparator for tasks: use VALUE as the first key, COST as the second key; sort in DESCENDING order
+// inspired by http://blog.csdn.net/nameofcsdn/article/details/52056599
 inline int cmp(const void* p1, const void* p2);
 
 Task resources[MAXRES];
@@ -79,6 +80,7 @@ int cmp(const void* p1, const void* p2)
 
 /***************************
  * AVL Implementation
+ * inspired by http://kukuruku.co/hub/cpp/avl-trees
  ***************************/
 
 typedef struct {
