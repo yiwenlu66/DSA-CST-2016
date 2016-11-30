@@ -1,29 +1,32 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #define BUF_SZ (1 << 20)
-#define MAXNODE 500000
-#define MAXLOOKUP 350000
+#define MAXRES 500000
+#define MAXTASK 350000
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
 char ibuf[BUF_SZ];
 
 typedef struct {
-    int p;
-    int v;
-} Pair;
+    int cost;
+    int value;
+} Task;
 
-inline int cmp(Pair p1, Pair p2);
+// Comparator for tasks: use VALUE as the first key, COST as the second key; sort in DESCENDING order
+inline int cmp(const void* p1, const void* p2);
 
-Pair lookup[MAXLOOKUP];
+Task resources[MAXRES];
+Task tasks[MAXTASK];
 
 /***************************
  * AVL Interface
  ***************************/
 typedef int ptr;
-ptr insert(ptr root, Pair key);
-ptr find(ptr root, Pair key);   // find the node with the smallest key >= the given key
-ptr del(ptr root, Pair key);
-inline Pair getkey(ptr);
+ptr insert(ptr root, int k);
+ptr find(ptr root, int k);   // find the node with the smallest key >= k
+ptr del(ptr root, int k);
+inline int getkey(ptr);
 
 
 int main()
@@ -33,39 +36,45 @@ int main()
     scanf("%d%d", &n, &m);
     int i;
     for (i = 0; i < n; ++i) {
-        scanf("%d%d", &lookup[i].p, &lookup[i].v);
+        scanf("%d%d", &tasks[i].cost, &tasks[i].value);
     }
-    int root = -1;  // empty tree
     for (i = 0; i < m; ++i) {
-        int h, d;
-        scanf("%d%d", &h, &d);
-        root = insert(root, (Pair) { .p = h, .v = d });
+        scanf("%d%d", &resources[i].cost, &resources[i].value);
     }
-    int sum = 0;
+    qsort(tasks, n, sizeof(Task), cmp);
+    qsort(resources, m, sizeof(Task), cmp);
+    
+    uint64_t sum = 0;
+    ptr root = -1;  // empty tree
+    int j = 0;
     for (i = 0; i < n; ++i) {
-        Pair key = getkey(find(root, lookup[i]));
-        sum += key.p;
-        root = del(root, key);
+        while (resources[j].value >= tasks[i].value) {
+            root = insert(root, resources[j++].cost);
+        }   // costs of resources whose values can cover the value of the current task are kept in the tree
+        int k = getkey(find(root, tasks[i].cost));  // pick the cheapest one to afford the current task
+        sum += (uint64_t)k;
+        root = del(root, k);
     }
-    printf("%d\n", sum);
+    printf("%lld\n", sum);
     return 0;
 }
 
-int cmp(Pair p1, Pair p2)
+int cmp(const void* p1, const void* p2)
 {
-    if (p1.p < p2.p) {
-        return -1;
-    }
-    if (p1.p == p2.p) {
-        if (p1.v < p2.v) {
-            return -1;
-        }
-        if (p1.v == p2.v) {
-            return 0;
-        }
+    Task * t1 = (Task *)p1, * t2 = (Task *)p2;
+    if (t1->value < t2->value) {
         return 1;
     }
-    return 1;
+    if (t1->value == t2->value) {
+        if (t1->cost < t2->cost) {
+            return 1;
+        }
+        if (t1->cost == t2->cost) {
+            return 0;
+        }
+        return -1;
+    }
+    return -1;
 }
 
 /***************************
@@ -73,14 +82,14 @@ int cmp(Pair p1, Pair p2)
  ***************************/
 
 typedef struct {
-    Pair key;
+    int key;
     ptr lc, rc;
     int8_t h;
 } Node;
 
-Node pool[MAXNODE];
+Node pool[MAXRES];
 int n_alloc = 0;
-inline ptr alloc(Pair key);
+inline ptr alloc(int k);
 
 ptr balance(ptr root);
 ptr findmin(ptr root);
@@ -90,12 +99,12 @@ inline void updateheight(ptr);
 inline int8_t bf(ptr); // balance factor
 ptr rotleft(ptr), rotright(ptr);
 
-ptr insert(ptr root, Pair key)
+ptr insert(ptr root, int key)
 {
     if (root == -1) {
         return alloc(key);
     }
-    if (cmp(key, pool[root].key) == -1) {
+    if (key < pool[root].key) {
         pool[root].lc = insert(pool[root].lc, key);
     } else {
         pool[root].rc = insert(pool[root].rc, key);
@@ -103,36 +112,27 @@ ptr insert(ptr root, Pair key)
     return balance(root);
 }
 
-ptr find(ptr root, Pair key)
+ptr find(ptr root, int key)
 {
     if (root == -1) {
         return -1;
     }
-    switch (cmp(key, pool[root].key)) {
-    case -1: {
+    if (key < pool[root].key) {
         ptr l = find(pool[root].lc, key);
         return (l == -1) ? root : l;
     }
-    case 0:
+    if (key == pool[root].key) {
         return root;
-    case 1: default:
-        return find(pool[root].rc, key);
     }
+    return find(pool[root].rc, key);
 }
 
-ptr del(ptr root, Pair key)
+ptr del(ptr root, int key)
 {
     if (root == -1) {
         return -1;
     }
-    switch (cmp(key, pool[root].key)) {
-    case -1:
-        pool[root].lc = del(pool[root].lc, key);
-        break;
-    case 1:
-        pool[root].rc = del(pool[root].rc, key);
-        break;
-    case 0: {
+    if (key == pool[root].key) {
         ptr l = pool[root].lc, r = pool[root].rc;
         if (r == -1) {
             return l;
@@ -142,16 +142,20 @@ ptr del(ptr root, Pair key)
         pool[min].lc = l;
         return balance(min);
     }
+    if (key < pool[root].key) {
+        pool[root].lc = del(pool[root].lc, key);
+    } else {
+        pool[root].rc = del(pool[root].rc, key);
     }
     return balance(root);
 }
 
-Pair getkey(ptr p)
+int getkey(ptr p)
 {
     return pool[p].key;
 }
 
-ptr alloc(Pair key)
+ptr alloc(int key)
 {
     pool[n_alloc].key = key;
     pool[n_alloc].lc = pool[n_alloc].rc = -1;
@@ -169,7 +173,7 @@ ptr balance(ptr root)
         }
         return rotleft(root);
     case -2:
-        if (bf(pool[root].lc) < 0) {
+        if (bf(pool[root].lc) > 0) {
             pool[root].lc = rotleft(pool[root].lc);
         }
         return rotright(root);
@@ -212,8 +216,8 @@ ptr rotleft(ptr q)
     ptr p = pool[q].rc;
     pool[q].rc = pool[p].lc;
     pool[p].lc = q;
-    updateheight(p);
     updateheight(q);
+    updateheight(p);
     return p;
 }
 
