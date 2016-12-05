@@ -103,8 +103,7 @@ inline Node* getnode(ptr p);
 inline Node* getlc(ptr p);
 inline Node* getrc(ptr p);
 
-inline int getn(int pos, int ver); // find the number of segments at the given position and version
-inline uint64_t getsw(int pos, int ver); // find the sum of weights at the given position and version
+inline void getdata(int pos, int ver, int* n, uint64_t* sw); // find n and sw at the given position and version
 
 ptr __init(int l, int r);  // initialize sub-tree for [l, r];
 
@@ -197,9 +196,11 @@ uint64_t query(int pos, int k)
     // # segments at x is non-decreasing; binary search for the root of the corresponding version
     int lo = 0, hi = n_version;
     int ver;
+    int n;
+    uint64_t sw = 0;
     while (lo < hi) {
         ver = lo + ((hi - lo) >> 1);
-        int n = getn(pos, ver);
+        getdata(pos, ver, &n, &sw);
         if (n == k) {
             break;
         } else if (n > k) {
@@ -211,45 +212,30 @@ uint64_t query(int pos, int k)
     if (lo == hi) {
         // not found, use the latest version
         ver = n_version - 1;
-    }
-    return getsw(pos, ver);
-}
-
-int _getn(int pos, ptr root);
-uint64_t _getsw(int pos, ptr root);
-
-int getn(int pos, int ver)
-{
-    return _getn(pos, roots[ver]);
-}
-
-uint64_t getsw(int pos,  int ver)
-{
-    return _getsw(pos, roots[ver]);
-}
-
-int _getn(int pos, ptr root)
-{
-    Node * _root = getnode(root), * _lc = getlc(root), * _rc = getrc(root);
-    int n = _root->n;
-    if (_lc && pos <= _lc->r) {
-        n += _getn(pos, _root->lc);
-    } else if (_rc && pos >= _rc->l) {
-        n += _getn(pos, _root->rc);
-    }
-    return n;
-}
-
-uint64_t _getsw(int pos, ptr root)
-{
-    Node * _root = getnode(root), * _lc = getlc(root), * _rc = getrc(root);
-    uint64_t sw = _root->sw;
-    if (_lc && pos <= _lc->r) {
-        sw += _getsw(pos, _root->lc);
-    } else if (_rc && pos >= _rc->l) {
-        sw += _getsw(pos, _root->rc);
+        getdata(pos, ver, &n, &sw);
     }
     return sw;
+}
+
+void _getdata(int pos, ptr root, int* n, uint64_t* sw);
+
+void getdata(int pos, int ver, int* n, uint64_t* sw)
+{
+    *sw = 0;
+    *n = 0;
+    _getdata(pos, roots[ver], n, sw);
+}
+
+void _getdata(int pos, ptr root, int* n, uint64_t* sw)
+{
+    Node * _root = getnode(root), * _lc = getlc(root), * _rc = getrc(root);
+    *n += _root->n;
+    *sw += _root->sw;
+    if (_lc && pos <= _lc->r) {
+        _getdata(pos, _root->lc, n, sw);
+    } else if (_rc && pos >= _rc->l) {
+        _getdata(pos, _root->rc, n, sw);
+    }
 }
 
 ptr alloc(int l, int r, ptr lc, ptr rc)
