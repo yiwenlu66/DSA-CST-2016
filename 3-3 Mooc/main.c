@@ -9,13 +9,13 @@ char ibuf[BUF_SZ], obuf[BUF_SZ];
  * DEPQ interface
  *************************/
 void insert(int);
-inline int popmax();
-inline int popmin();
+inline int popmax();    // return 0 if empty
+inline int popmin();    // return 0 if empty
 
 int main()
 {
-//    setvbuf(stdin, ibuf, _IOFBF, BUF_SZ);
-//    setvbuf(stdout, obuf, _IOFBF, BUF_SZ);
+    setvbuf(stdin, ibuf, _IOFBF, BUF_SZ);
+    setvbuf(stdout, obuf, _IOFBF, BUF_SZ);
 
     int n;
     scanf("%d", &n);
@@ -61,7 +61,8 @@ int minheap[MAXNODE], maxheap[MAXNODE];     // record index in pool
 int pool_sz = 0, heap_sz = 0;
 
 void percolateup(int whichheap, int rank);
-void percolatedown(int whichheap, int sz, int rank);
+void percolatedown(int whichheap, int sz);
+void movetotop(int whichheap, int rank);
 inline void del(int whichheap, int sz, int rank);
 
 inline int getval(int idx);
@@ -131,8 +132,9 @@ void swap(int whichheap, int r1, int r2)
 
 void del(int whichheap, int sz, int rank)
 {
-    swap(whichheap, sz - 1, rank);
-    percolatedown(whichheap, sz - 1, rank);
+    movetotop(whichheap, rank);
+    swap(whichheap, sz - 1, 0);
+    percolatedown(whichheap, sz - 1);
 }
 
 void percolateup(int whichheap, int rank)
@@ -148,6 +150,15 @@ void percolateup(int whichheap, int rank)
             swap(whichheap, rank, parent);
             rank = parent;
         }
+    }
+}
+
+void movetotop(int whichheap, int rank)
+{
+    while (rank) {
+        int parent = (rank - 1) >> 1;
+        swap(whichheap, rank, parent);
+        rank = parent;
     }
 }
 
@@ -179,8 +190,9 @@ int properparent(int whichheap, int sz, int rank)
     return ((whichheap == MAX) ? argmax(heap, rank, properchild) : argmin(heap, rank, properchild));
 }
 
-void percolatedown(int whichheap, int sz, int rank)
+void percolatedown(int whichheap, int sz)
 {
+    int rank = 0;
     int newparent;
     while (rank != (newparent = properparent(whichheap, sz, rank))) {
         swap(whichheap, rank, newparent);
