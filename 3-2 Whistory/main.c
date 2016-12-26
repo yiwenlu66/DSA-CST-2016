@@ -45,8 +45,8 @@ void minify(char* str)
     }
 
     // find minimal rotation (k)
-    int f[MAXN];
-    memset(f, -1, l * sizeof(int));
+    int f[MAXN << 1];
+    memset(f, -1, (l << 1) * sizeof(int));
     int j, k = 0;
     for (j = 1; j < l << 1; ++j) {
         i = f[j - k - 1];
