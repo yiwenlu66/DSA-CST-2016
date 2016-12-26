@@ -7,7 +7,7 @@
 
 char ibuf[BUF_SZ], obuf[BUF_SZ];
 
-void minify(char* str);     // change str into its minimal representation
+void minify(char* str);     // change str into its minimal rotation
 int hash(char* str);
 inline void setval(int key, int val);
 inline int getval(int key);   // 0 for unavailable
@@ -33,38 +33,42 @@ int main()
     return 0;
 }
 
+/* inspired by https://en.wikipedia.org/wiki/Lexicographically_minimal_string_rotation */
 void minify(char* str)
 {
+    // concatenate str to itself
+    char ss[MAXN << 1];
     int l = (int)strlen(str);
-    int i = 0, j = 1;
-    while (j < l) {
-        if (str[i] > str[j]) {
-            i = j++;
-        } else if (str[i] < str[j]) {
-            ++j;
+    int i;
+    for (i = 0; i < l; ++i) {
+        ss[i] = ss[i + l] = str[i];
+    }
+
+    // find minimal rotation (k)
+    int f[MAXN];
+    memset(f, -1, l * sizeof(int));
+    int j, k = 0;
+    for (j = 1; j < l << 1; ++j) {
+        i = f[j - k - 1];
+        while (i != - 1 && ss[j] != ss[k + i + 1]) {
+            if (ss[j] < ss[k + i + 1]) {
+                k = j - i - 1;
+            }
+            i = f[i];
+        }
+        if (ss[j] != ss[k + i + 1]) {
+            if (ss[j] < ss[k]) {
+                k = j;
+            }
+            f[j - k] = -1;
         } else {
-            // str[i] == str[j]
-            int k = 0;
-            while (j + k < l && str[i + k] == str[j + k]) {
-                ++k;
-            }
-            if (j + k == l) {
-                break;
-            }
-            if (str[i + k] > str[j + k]) {
-                i = j++;
-            } else {
-                ++j;
-            }
+            f[j - k] = i + 1;
         }
     }
-    char tmp[MAXN];
-    strcpy(tmp, str + i);
-    for (j = l - 1; j >= l - i; --j) {
-        str[j] = str[j - (l - i)];
-    }
-    for (j = 0; j < l - i; ++j) {
-        str[j] = tmp[j];
+
+    // change str into its minimal rotation
+    for (i = 0; i < l; ++i) {
+        str[i] = ss[i + k];
     }
 }
 
