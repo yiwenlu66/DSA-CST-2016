@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #define BUF_SZ (1 << 20)
-#define MOD 519989
+#define MOD 520019
 
 char ibuf[BUF_SZ];
 
