@@ -19,7 +19,7 @@ int deduplicate(int* a, int old_size);  // return the new size
 inline int cmp_int(const void* p1, const void* p2);
 inline int cmp_station(const void* p1, const void* p2);    // sort stations by x coordinate
 
-inline int swap(int* a, int* b);
+inline void swap(int* a, int* b);
 
 /*************************************
  * Persistent segment tree interface
@@ -73,12 +73,10 @@ int main()
         Response((num_t != num_i) ? (int)((sum_t - sum_i) / (num_t - num_i)) : 0);
     }
 
-    Response(0);
-
     return 0;
 }
 
-int swap(int* a, int* b)
+void swap(int* a, int* b)
 {
     int t = *a;
     *a = *b;
@@ -198,6 +196,11 @@ void _query(ptr rootptr, int lo, int hi, int* num, int64_t* sum)
 {
     Node* root = pool + rootptr;
 
+    // trivial case: [lo, hi] does not intersect the range of root
+    if (hi < root->lo || lo > root->hi) {
+        return;
+    }
+
     // trivial case: [lo, hi] covers the range of root
     if (lo <= root->lo && hi >= root->hi) {
         *num += root->num;
@@ -208,10 +211,10 @@ void _query(ptr rootptr, int lo, int hi, int* num, int64_t* sum)
     // query recursively
     int lh = (pool + root->lc)->hi, rl = (pool + root->rc)->lo;
     if (lo <= lh) {
-        _query(root->lc, lo, lh, num, sum);
+        _query(root->lc, lo, hi, num, sum);
     }
     if (hi >= rl) {
-        _query(root->rc, rl, hi, num, sum);
+        _query(root->rc, lo, hi, num, sum);
     }
 }
 
